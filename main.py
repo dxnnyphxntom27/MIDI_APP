@@ -54,7 +54,7 @@ def draw_piano(whites, blacks):
         for j in range(len(whites)):
             if whites[j][0] == i and whites[j][1] > 0:
                 pygame.draw.rect(screen, active_white_color, [i * WHITE_BUTTON_WIDTH, HEIGHT - 300, WHITE_BUTTON_WIDTH, 300], 0, 2)
-                whites[j][1] -= 1
+                #whites[j][1] -= 1
                 pygame.draw.rect(screen, white_keys_outline, [i * WHITE_BUTTON_WIDTH, HEIGHT - 300, WHITE_BUTTON_WIDTH, 300], 1, 3)
 
         # Draw white key labels
@@ -73,7 +73,7 @@ def draw_piano(whites, blacks):
             if blacks[q][0] == i:
                 if blacks[q][1] > 0:
                     pygame.draw.rect(screen, active_black_color, [BLACK_BUTTON_WIDTH + (i * WHITE_BUTTON_WIDTH) + (skip_count * WHITE_BUTTON_WIDTH), HEIGHT - 300, BLACK_BUTTON_WIDTH + 2, 200], 0, 2)
-                    blacks[q][1] -= 1
+                    #blacks[q][1] -= 1
 
         key_label = font_blacks.render(notes.black_labels[i], True, black_keys_text)
         screen.blit(key_label, (BLACK_BUTTON_WIDTH + 2 + (i * WHITE_BUTTON_WIDTH) + (skip_count * WHITE_BUTTON_WIDTH), HEIGHT - 120))
@@ -122,7 +122,6 @@ button4 = Button(160, 80, 125, 40, "Export MIDI", button_click_action)
 button5 = Button((WIDTH/2)-260, 20, 450, 40, "Instrument:   CLASSICAL PIANO", button_click_action)
 
 
-
 text = ""
 run = True
 while run:
@@ -137,60 +136,131 @@ while run:
     img = pygame.image.load('C:\\Users\\yakac\\PycharmProjects\\APP_MIDI\\assets\\logo.png')
     screen.blit(img, (WIDTH-375, 10))
 
+# MIDI CONTROLS
     if midi_input.poll():
         midi_events = midi_input.read(10)
         for midi_event in midi_events:
             status_byte = midi_event[0][0] & 0xF0
             if status_byte in [0x90, 0x80]:  # filtering
                 print("MIDI Event:", midi_event)
-                if midi_event[0][2] > 0:
+                if midi_event[0][2] > 0:  # if velocity of note >0 (pressed)
                     if midi_event[0][1] in notes.midi_notes:
                         if notes.midi_notes[midi_event[0][1]][1] == '#':
                             index = notes.black_labels.index(notes.midi_notes[midi_event[0][1]])
                             black_sounds[index].play(0, 1000)
-                            active_blacks.append([index, 165])
+                            active_blacks.append([index, 1])
                         else:
                             index = notes.white_notes.index(notes.midi_notes[midi_event[0][1]])
                             white_sounds[index].play(0, 1000)
-                            active_whites.append([index, 165])
+                            active_whites.append([index, 1])
 
+                elif midi_event[0][2] == 0:  # if velocity of note =0 (released)
+                    if midi_event[0][1] in notes.midi_notes:
+                        released_note = notes.midi_notes[midi_event[0][1]]
+                        if released_note[1] == '#':
+                            for i in range(len(active_blacks)):
+                                if active_blacks[i][0] == notes.black_labels.index(released_note):
+                                    active_blacks[i][1] = 0
+                                    if active_blacks[i][1] == 0:
+                                        active_blacks.pop(i)
+                                        break
+                        else:
+                            for i in range(len(active_whites)):
+                                if active_whites[i][0] == notes.white_notes.index(released_note):
+                                    active_whites[i][1] = 0
+                                    if active_whites[i][1] == 0:
+                                        active_whites.pop(i)
+                                        break
 
-
+# MOUSE CONTROLS
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
 
         if event.type == pygame.MOUSEBUTTONDOWN:
+            print("Mouse Event:", event)
             black_key = False
             for i in range(len(black_keys)):
                 if black_keys[i].collidepoint(event.pos):
                     black_sounds[i].play(0, 1000)
                     black_key = True
-                    active_blacks.append([i, 165])
+                    active_blacks.append([i, 1])
             for i in range(len(white_keys)):
                 if white_keys[i].collidepoint(event.pos) and not black_key:
                     white_sounds[i].play(0, 1000)
-                    active_whites.append([i, 165])
+                    active_whites.append([i, 1])
 
-        if event.type == pygame.TEXTINPUT:
-            if event.text.upper() in notes.left_octave:
-                if notes.left_octave[event.text.upper()][1] == '#':
-                    index = notes.black_labels.index(notes.left_octave[event.text.upper()])
+        if event.type == pygame.MOUSEBUTTONUP:
+            print("Mouse Event:", event)
+            for entry in active_blacks:
+                entry[1] = 0
+            for entry in active_whites:
+                entry[1] = 0
+
+# KEYBOARD CONTROLS
+        if event.type == pygame.KEYDOWN:
+            print("Keyboard Event:", event)
+            if event.key == pygame.K_ESCAPE:  # You can handle special keys if needed
+                pygame.quit()
+
+            key_char = pygame.key.name(event.key).upper()
+
+            if key_char in notes.left_octave:
+                if notes.left_octave[key_char][1] == '#':
+                    index = notes.black_labels.index(notes.left_octave[key_char])
                     black_sounds[index].play(0, 1000)
-                    active_blacks.append([index, 165])
+                    active_blacks.append([index, 1])
                 else:
-                    index = notes.white_notes.index(notes.left_octave[event.text.upper()])
+                    index = notes.white_notes.index(notes.left_octave[key_char])
                     white_sounds[index].play(0, 1000)
-                    active_whites.append([index, 165])
-            if event.text.upper() in notes.right_octave:
-                if notes.right_octave[event.text.upper()][1] == '#':
-                    index = notes.black_labels.index(notes.right_octave[event.text.upper()])
+                    active_whites.append([index, 1])
+
+            if key_char in notes.right_octave:
+                if notes.right_octave[key_char][1] == '#':
+                    index = notes.black_labels.index(notes.right_octave[key_char])
                     black_sounds[index].play(0, 1000)
-                    active_blacks.append([index, 165])
+                    active_blacks.append([index, 1])
                 else:
-                    index = notes.white_notes.index(notes.right_octave[event.text.upper()])
+                    index = notes.white_notes.index(notes.right_octave[key_char])
                     white_sounds[index].play(0, 1000)
-                    active_whites.append([index, 165])
+                    active_whites.append([index, 1])
+
+        elif event.type == pygame.KEYUP:
+            print("Keyboard Event:", event)
+            key_char = pygame.key.name(event.key).upper()
+            if key_char in notes.left_octave:
+                released_note = notes.left_octave[key_char]
+                if released_note[1] == '#':
+                    for i in range(len(active_blacks)):
+                        if active_blacks[i][0] == notes.black_labels.index(released_note):
+                            active_blacks[i][1] -= 1
+                            if active_blacks[i][1] == 0:
+                                active_blacks.pop(i)
+                                break
+                else:
+                    for i in range(len(active_whites)):
+                        if active_whites[i][0] == notes.white_notes.index(released_note):
+                            active_whites[i][1] -= 1
+                            if active_whites[i][1] == 0:
+                                active_whites.pop(i)
+                                break
+
+            if key_char in notes.right_octave:
+                released_note = notes.right_octave[key_char]
+                if notes.right_octave[key_char][1] == '#':
+                    for i in range(len(active_blacks)):
+                        if active_blacks[i][0] == notes.black_labels.index(released_note):
+                            active_blacks[i][1] -= 1
+                            if active_blacks[i][1] == 0:
+                                active_blacks.pop(i)
+                                break
+                else:
+                    for i in range(len(active_whites)):
+                        if active_whites[i][0] == notes.white_notes.index(released_note):
+                            active_whites[i][1] -= 1
+                            if active_whites[i][1] == 0:
+                                active_whites.pop(i)
+                                break
 
     pygame.display.flip()
 pygame.quit()
