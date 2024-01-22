@@ -33,8 +33,12 @@ active_blacks = []
 
 pygame.init()
 pygame.midi.init()
-input_device_id = 1
-midi_input = pygame.midi.Input(input_device_id)
+input_device_id = pygame.midi.get_default_input_id()
+
+isconnected = False
+if input_device_id != -1:
+    isconnected = True
+    midi_input = pygame.midi.Input(input_device_id)
 
 print("MIDI Input Device Name:", pygame.midi.get_device_info(input_device_id))
 
@@ -137,40 +141,41 @@ while run:
     screen.blit(img, (WIDTH-375, 10))
 
 # MIDI CONTROLS
-    if midi_input.poll():
-        midi_events = midi_input.read(10)
-        for midi_event in midi_events:
-            status_byte = midi_event[0][0] & 0xF0
-            if status_byte in [0x90, 0x80]:  # filtering
-                print("MIDI Event:", midi_event)
-                if midi_event[0][2] > 0:  # if velocity of note >0 (pressed)
-                    if midi_event[0][1] in notes.midi_notes:
-                        if notes.midi_notes[midi_event[0][1]][1] == '#':
-                            index = notes.black_labels.index(notes.midi_notes[midi_event[0][1]])
-                            black_sounds[index].play(0, 1000)
-                            active_blacks.append([index, 1])
-                        else:
-                            index = notes.white_notes.index(notes.midi_notes[midi_event[0][1]])
-                            white_sounds[index].play(0, 1000)
-                            active_whites.append([index, 1])
+    if isconnected:
+        if midi_input.poll():
+            midi_events = midi_input.read(10)
+            for midi_event in midi_events:
+                status_byte = midi_event[0][0] & 0xF0
+                if status_byte in [0x90, 0x80]:  # filtering
+                    print("MIDI Event:", midi_event)
+                    if midi_event[0][2] > 0:  # if velocity of note >0 (pressed)
+                        if midi_event[0][1] in notes.midi_notes:
+                            if notes.midi_notes[midi_event[0][1]][1] == '#':
+                                index = notes.black_labels.index(notes.midi_notes[midi_event[0][1]])
+                                black_sounds[index].play(0, 1000)
+                                active_blacks.append([index, 1])
+                            else:
+                                index = notes.white_notes.index(notes.midi_notes[midi_event[0][1]])
+                                white_sounds[index].play(0, 1000)
+                                active_whites.append([index, 1])
 
-                elif midi_event[0][2] == 0:  # if velocity of note =0 (released)
-                    if midi_event[0][1] in notes.midi_notes:
-                        released_note = notes.midi_notes[midi_event[0][1]]
-                        if released_note[1] == '#':
-                            for i in range(len(active_blacks)):
-                                if active_blacks[i][0] == notes.black_labels.index(released_note):
-                                    active_blacks[i][1] = 0
-                                    if active_blacks[i][1] == 0:
-                                        active_blacks.pop(i)
-                                        break
-                        else:
-                            for i in range(len(active_whites)):
-                                if active_whites[i][0] == notes.white_notes.index(released_note):
-                                    active_whites[i][1] = 0
-                                    if active_whites[i][1] == 0:
-                                        active_whites.pop(i)
-                                        break
+                    elif midi_event[0][2] == 0:  # if velocity of note =0 (released)
+                        if midi_event[0][1] in notes.midi_notes:
+                            released_note = notes.midi_notes[midi_event[0][1]]
+                            if released_note[1] == '#':
+                                for i in range(len(active_blacks)):
+                                    if active_blacks[i][0] == notes.black_labels.index(released_note):
+                                        active_blacks[i][1] = 0
+                                        if active_blacks[i][1] == 0:
+                                            active_blacks.pop(i)
+                                            break
+                            else:
+                                for i in range(len(active_whites)):
+                                    if active_whites[i][0] == notes.white_notes.index(released_note):
+                                        active_whites[i][1] = 0
+                                        if active_whites[i][1] == 0:
+                                            active_whites.pop(i)
+                                            break
 
 # MOUSE CONTROLS
     for event in pygame.event.get():
@@ -194,8 +199,10 @@ while run:
             print("Mouse Event:", event)
             for entry in active_blacks:
                 entry[1] = 0
+                active_blacks.remove(entry)
             for entry in active_whites:
                 entry[1] = 0
+                active_whites.remove(entry)
 
 # KEYBOARD CONTROLS
         if event.type == pygame.KEYDOWN:
