@@ -2,9 +2,19 @@ import pygame
 import notes
 from pygame import mixer
 import pygame.midi
+from midiutil import MIDIFile
 
 pygame.init()
 pygame.mixer.set_num_channels(50)
+
+midi_time = 0
+track = 0
+channel = 0
+duration = 1   # In beats
+midi_file = MIDIFile(1)
+tempo = 120  # Adjust as needed
+midi_file.addTempo(track, midi_time, tempo)
+
 
 font_whites = pygame.font.SysFont(None, 24)
 font_blacks = pygame.font.SysFont(None, 15)
@@ -97,7 +107,7 @@ def draw_piano(whites, blacks):
 
 
 class Button:
-    def __init__(self, x, y, width, height, text, action):
+    def __init__(self, x, y, width, height, text, action=None):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
         self.font = pygame.font.SysFont(None, 24)
@@ -111,25 +121,30 @@ class Button:
         screen.blit(text_surface, text_rect)
 
     def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if self.rect.collidepoint(event.pos):
-                self.action()
+        if self.action is not None and callable(self.action):
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.rect.collidepoint(event.pos):
+                    self.action()
 
 # Function to be called when the button is clicked
 def button_click_action():
     print("Button clicked!")
 
+
+text = ""
+
+run = True
 button = Button(20, 20, 100, 40, "Record", button_click_action)
 button2 = Button(135, 20, 150, 40, "Stop Recording", button_click_action)
 button3 = Button(20, 80, 125, 40, "Import MIDI", button_click_action)
 button4 = Button(160, 80, 125, 40, "Export MIDI", button_click_action)
-button5 = Button((WIDTH/2)-260, 20, 450, 40, "Instrument:   CLASSICAL PIANO", button_click_action)
+button5 = Button(160, 80, 125, 40, "Export MIDI", button_click_action)
+button6 = Button(160, 80, 125, 40, "Export MIDI", button_click_action)
+button7 = Button((WIDTH/2)-260, 20, 450, 40, "Instrument:   CLASSICAL PIANO", button_click_action)
 
-
-text = ""
-run = True
 while run:
     timer.tick(fps)
+    midi_time += 0.1
     screen.fill(background_color)
     white_keys, black_keys, active_whites, active_blacks = draw_piano(active_whites, active_blacks)
     button.draw()
@@ -137,6 +152,8 @@ while run:
     button3.draw()
     button4.draw()
     button5.draw()
+    button6.draw()
+    button7.draw()
     img = pygame.image.load('C:\\Users\\yakac\\PycharmProjects\\APP_MIDI\\assets\\logo.png')
     screen.blit(img, (WIDTH-375, 10))
 
@@ -149,6 +166,10 @@ while run:
                 if status_byte in [0x90, 0x80]:  # filtering
                     print("MIDI Event:", midi_event)
                     if midi_event[0][2] > 0:  # if velocity of note >0 (pressed)
+                        midi_file.addNote(track, channel, midi_event[0][1], midi_time, 1, 100)
+                        print("midifile", midi_time)
+                        print(midi_event[0][1])
+                        print(midi_time)
                         if midi_event[0][1] in notes.midi_notes:
                             if notes.midi_notes[midi_event[0][1]][1] == '#':
                                 index = notes.black_labels.index(notes.midi_notes[midi_event[0][1]])
@@ -203,6 +224,14 @@ while run:
             for entry in active_whites:
                 entry[1] = 0
                 active_whites.remove(entry)
+
+        button.handle_event(event)
+        button2.handle_event(event)
+        button3.handle_event(event)
+        button4.handle_event(event)
+        button5.handle_event(event)
+        button6.handle_event(event)
+        button7.handle_event(event)
 
 # KEYBOARD CONTROLS
         if event.type == pygame.KEYDOWN:
@@ -271,3 +300,7 @@ while run:
 
     pygame.display.flip()
 pygame.quit()
+
+with open("output.mid", "wb") as output_file:
+    midi_file.writeFile(output_file)
+print("done")

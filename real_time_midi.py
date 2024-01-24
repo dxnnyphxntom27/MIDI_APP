@@ -1,31 +1,23 @@
-import pygame
-import pygame.midi
+from midiutil import MIDIFile
 
-def main():
-    pygame.init()
-    pygame.midi.init()
+degrees  = [60, 62, 64, 65, 67, 69, 71, 72] # MIDI note number
+track    = 0
+channel  = 0
+time     = 0   # In beats
+duration = 1   # In beats
+tempo    = 60  # In BPM
+volume   = 100 # 0-127, as per the MIDI standard
 
-    input_device_id = 1
-    midi_input = pygame.midi.Input(input_device_id)
+MyMIDI = MIDIFile(1) # One track, defaults to format 1 (tempo track
+                     # automatically created)
+MyMIDI.addTempo(track,time, tempo)
 
-    print("MIDI Input Device Name:", pygame.midi.get_device_info(input_device_id))
+run = True
+while run:
+    for pitch in degrees:
+        time = time + 1
+        MyMIDI.addNote(track, channel, pitch, time, duration, volume)
+    run = False
 
-    try:
-        while True:
-            if midi_input.poll():
-                midi_events = midi_input.read(10)
-                for midi_event in midi_events:
-                    status_byte = midi_event[0][0] & 0xF0
-                    if status_byte in [0x90, 0x80]:
-                        print("MIDI Event:", midi_event)
-
-    except KeyboardInterrupt:
-        pass
-
-    finally:
-        midi_input.close()
-        pygame.midi.quit()
-        pygame.quit()
-
-if __name__ == "__main__":
-    main()
+with open("test.mid", "wb") as output_file:
+    MyMIDI.writeFile(output_file)
