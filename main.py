@@ -12,7 +12,7 @@ track = 0
 channel = 0
 duration = 1
 midi_file = MIDIFile(1)
-tempo = 165
+tempo = 120
 midi_file.addTempo(track, midi_time, tempo)
 
 
@@ -68,7 +68,6 @@ def draw_piano(whites, blacks):
         for j in range(len(whites)):
             if whites[j][0] == i and whites[j][1] > 0:
                 pygame.draw.rect(screen, active_white_color, [i * WHITE_BUTTON_WIDTH, HEIGHT - 300, WHITE_BUTTON_WIDTH, 300], 0, 2)
-                #whites[j][1] -= 1
                 pygame.draw.rect(screen, white_keys_outline, [i * WHITE_BUTTON_WIDTH, HEIGHT - 300, WHITE_BUTTON_WIDTH, 300], 1, 3)
 
         # Draw white key labels
@@ -87,7 +86,6 @@ def draw_piano(whites, blacks):
             if blacks[q][0] == i:
                 if blacks[q][1] > 0:
                     pygame.draw.rect(screen, active_black_color, [BLACK_BUTTON_WIDTH + (i * WHITE_BUTTON_WIDTH) + (skip_count * WHITE_BUTTON_WIDTH), HEIGHT - 300, BLACK_BUTTON_WIDTH + 2, 200], 0, 2)
-                    #blacks[q][1] -= 1
 
         key_label = font_blacks.render(notes.black_labels[i], True, black_keys_text)
         screen.blit(key_label, (BLACK_BUTTON_WIDTH + 2 + (i * WHITE_BUTTON_WIDTH) + (skip_count * WHITE_BUTTON_WIDTH), HEIGHT - 120))
@@ -171,12 +169,10 @@ while True:
                                     index = notes.black_labels.index(notes.midi_notes[midi_event[0][1]])
                                     black_sounds[index].play(0, 1000)
                                     active_blacks.append([index, 1, key_start_time])
-                                    print("ab", active_blacks)
                                 else:
                                     index = notes.white_notes.index(notes.midi_notes[midi_event[0][1]])
                                     white_sounds[index].play(0, 1000)
                                     active_whites.append([index, 1, key_start_time])
-                                    print("aw", active_whites)
 
                         elif midi_event[0][2] == 0:  # if velocity of note =0 (released)
                             key_end_time = midi_time
@@ -279,14 +275,14 @@ while True:
                     if released_note[1] == '#':
                         for i in range(len(active_blacks)):
                             if active_blacks[i][0] == notes.black_labels.index(released_note):
-                                active_blacks[i][1] -= 1
+                                active_blacks[i][1] = 0
                                 if active_blacks[i][1] == 0:
                                     active_blacks.pop(i)
                                     break
                     else:
                         for i in range(len(active_whites)):
                             if active_whites[i][0] == notes.white_notes.index(released_note):
-                                active_whites[i][1] -= 1
+                                active_whites[i][1] = 0
                                 if active_whites[i][1] == 0:
                                     active_whites.pop(i)
                                     break
@@ -296,14 +292,14 @@ while True:
                     if notes.right_octave[key_char][1] == '#':
                         for i in range(len(active_blacks)):
                             if active_blacks[i][0] == notes.black_labels.index(released_note):
-                                active_blacks[i][1] -= 1
+                                active_blacks[i][1] = 0
                                 if active_blacks[i][1] == 0:
                                     active_blacks.pop(i)
                                     break
                     else:
                         for i in range(len(active_whites)):
                             if active_whites[i][0] == notes.white_notes.index(released_note):
-                                active_whites[i][1] -= 1
+                                active_whites[i][1] = 0
                                 if active_whites[i][1] == 0:
                                     active_whites.pop(i)
                                     break
