@@ -129,18 +129,29 @@ def button_click_action():
     print("Button clicked!")
 
 
+def my_timer(elapsed_seconds):
+    minutes = int(elapsed_seconds // 60)
+    seconds = int(elapsed_seconds % 60)
+    timer_text = f"{minutes:02d}:{seconds:02d}"
+    return timer_text
 text = ""
 
 run = True
+isRecording = False
+
 button_start_rec = Button(20, 75, 110, 40, "Record (Q)", button_click_action)
 button_stop_rec = Button(145, 75, 195, 40, "Stop Recording (W)", button_click_action)
 button_import = Button(20, 20, 140, 40, "Import MIDI (1)", button_click_action)
 button_start_play = Button(175, 20, 75, 40, "Play (2)", button_click_action)
 button_stop_play = Button(265, 20, 75, 40, "Stop (3)", button_click_action)
+button_recording = Button(20, 130, 320, 40, "", button_click_action)
 button_instrument = Button((WIDTH/2)-260, 20, 450, 40, "Instrument:   CLASSICAL PIANO", button_click_action)
 
 while True:
     while run:
+        if isRecording:
+            current_time = pygame.time.get_ticks()
+            elapsed_time = my_timer((current_time - start_rec_time)//1000)
         timer.tick(fps)
         midi_time += 0.01
         screen.fill(background_color)
@@ -151,8 +162,15 @@ while True:
         button_start_play.draw()
         button_stop_play.draw()
         button_instrument.draw()
+        button_recording.draw()
         img = pygame.image.load('C:\\Users\\yakac\\PycharmProjects\\APP_MIDI\\assets\\logo.png')
         screen.blit(img, (WIDTH-375, 10))
+        if isRecording:
+            time_text = font_whites.render(f"Recording:   {elapsed_time:}", True, (255, 100, 100))
+            screen.blit(time_text, (112, 142))
+        else:
+            time_text = font_whites.render('Recording:   00:00', True, (255, 255, 255))
+            screen.blit(time_text, (112, 142))
 
     # MIDI CONTROLS
         if isconnected:
@@ -246,6 +264,11 @@ while True:
 
                 if key_char == 'W':
                     run = False
+                    isRecording = False
+
+                if key_char == 'Q':
+                    isRecording = True
+                    start_rec_time = pygame.time.get_ticks()
 
                 if key_char in notes.left_octave:
                     if notes.left_octave[key_char][1] == '#':
@@ -307,5 +330,5 @@ while True:
         pygame.display.flip()
     with open("output.mid", "wb") as output_file:
         midi_file.writeFile(output_file)
-    print("done")
+    print("File was saved!")
     run = True
