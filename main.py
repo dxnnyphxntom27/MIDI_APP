@@ -45,9 +45,9 @@ pygame.init()
 pygame.midi.init()
 input_device_id = pygame.midi.get_default_input_id()
 
-isconnected = False
+isConnected = False
 if input_device_id != -1:
-    isconnected = True
+    isConnected = True
     midi_input = pygame.midi.Input(input_device_id)
 
 print("MIDI Input Device Name:", pygame.midi.get_device_info(input_device_id))
@@ -173,26 +173,26 @@ while True:
             screen.blit(time_text, (112, 142))
 
     # MIDI CONTROLS
-        if isconnected:
-            if midi_input.poll():
-                midi_events = midi_input.read(10)
-                for midi_event in midi_events:
+        if isConnected:
+            if midi_input.poll(): #  polling message
+                midi_events = midi_input.read(10) # storing polled messages
+                for midi_event in midi_events:  # separating to particular message
                     status_byte = midi_event[0][0] & 0xF0
                     if status_byte in [0x90, 0x80]:  # filtering
                         print("MIDI Event:", midi_event)
                         if midi_event[0][2] > 0:  # if velocity of note >0 (pressed)
-                            key_start_time = midi_time
-                            if midi_event[0][1] in notes.midi_notes:
-                                if notes.midi_notes[midi_event[0][1]][1] == '#':
-                                    index = notes.black_labels.index(notes.midi_notes[midi_event[0][1]])
-                                    black_sounds[index].play(0, 1000)
-                                    active_blacks.append([index, 1, key_start_time])
-                                else:
-                                    index = notes.white_notes.index(notes.midi_notes[midi_event[0][1]])
-                                    white_sounds[index].play(0, 1000)
-                                    active_whites.append([index, 1, key_start_time])
+                            key_start_time = midi_time  # current time
+                            if midi_event[0][1] in notes.midi_notes:  # ensuring the presence of input
+                                if notes.midi_notes[midi_event[0][1]][1] == '#':  # black key detection
+                                    index = notes.black_labels.index(notes.midi_notes[midi_event[0][1]])  # index
+                                    black_sounds[index].play(0, 1000)  # playing sound
+                                    active_blacks.append([index, 1, key_start_time])  # storing active button (UI, rec)
+                                else:  # white key detection
+                                    index = notes.white_notes.index(notes.midi_notes[midi_event[0][1]])  # index
+                                    white_sounds[index].play(0, 1000)  # playing sound
+                                    active_whites.append([index, 1, key_start_time])  # storing active button (UI, rec)
 
-                        elif midi_event[0][2] == 0:  # if velocity of note =0 (released)
+                        elif midi_event[0][2] == 0:  # if velocity of note = 0 or note off(released)
                             key_end_time = midi_time
                             if midi_event[0][1] in notes.midi_notes:
                                 released_note = notes.midi_notes[midi_event[0][1]]
@@ -202,7 +202,8 @@ while True:
                                             key_total_time = key_end_time - active_blacks[i][2]
                                             print("total", key_total_time)
                                             print("midi_time", midi_time)
-                                            midi_file.addNote(track, channel, midi_event[0][1], active_blacks[i][2], key_total_time, 100)
+                                            if isRecording:
+                                                midi_file.addNote(track, channel, midi_event[0][1], active_blacks[i][2], key_total_time, 100)
                                             active_blacks[i][1] = 0
                                             if active_blacks[i][1] == 0:
                                                 active_blacks.pop(i)
@@ -213,7 +214,8 @@ while True:
                                             key_total_time = key_end_time - active_whites[i][2]
                                             print("total", key_total_time)
                                             print("midi_time", midi_time)
-                                            midi_file.addNote(track, channel, midi_event[0][1], active_whites[i][2], key_total_time, 100)
+                                            if isRecording:
+                                                midi_file.addNote(track, channel, midi_event[0][1], active_whites[i][2], key_total_time, 100)
                                             active_whites[i][1] = 0
                                             if active_whites[i][1] == 0:
                                                 active_whites.pop(i)
@@ -268,6 +270,7 @@ while True:
 
                 if key_char == 'Q':
                     isRecording = True
+                    midi_time = 0
                     start_rec_time = pygame.time.get_ticks()
 
                 if key_char in notes.left_octave:

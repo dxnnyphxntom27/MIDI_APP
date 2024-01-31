@@ -1,23 +1,23 @@
-from midiutil import MIDIFile
+import mido
 
-degrees  = [60, 62, 64, 65, 67, 69, 71, 72] # MIDI note number
-track    = 0
-channel  = 0
-time     = 0   # In beats
-duration = 1   # In beats
-tempo    = 60  # In BPM
-volume   = 100 # 0-127, as per the MIDI standard
+def print_note_on_messages(midi_file_path):
+    try:
+        midi_file = mido.MidiFile(midi_file_path)
 
-MyMIDI = MIDIFile(1) # One track, defaults to format 1 (tempo track
-                     # automatically created)
-MyMIDI.addTempo(track,time, tempo)
+        print("Note-On Messages:")
+        for track in midi_file.tracks:
+            for message in track:
+                if message.type == 'note_on':
+                    print("Note:", message.note)
+                    print("Velocity:", message.velocity)
+                    print("Channel:", message.channel)
+                    print("Time:", message.time)
+                    print()
 
-run = True
-while run:
-    for pitch in degrees:
-        time = time + 1
-        MyMIDI.addNote(track, channel, pitch, time, duration, volume)
-    run = False
+    except Exception as e:
+        print("Error:", e)
 
-with open("test.mid", "wb") as output_file:
-    MyMIDI.writeFile(output_file)
+if __name__ == "__main__":
+    # Replace 'your_midi_file.mid' with the path to your MIDI file
+    midi_file_path = 'output.mid'
+    print_note_on_messages(midi_file_path)
