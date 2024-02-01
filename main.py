@@ -3,18 +3,30 @@ import notes
 from pygame import mixer
 import pygame.midi
 from midiutil import MIDIFile
+import mido
+import time
+import tkinter as tk
+from tkinter import filedialog
+
+root = tk.Tk()
+root.withdraw()
 
 pygame.init()
 pygame.mixer.set_num_channels(50)
 
+# MIDI Output file
 midi_time = 0
 track = 0
 channel = 0
 duration = 1
-midi_file = MIDIFile(1)
+midi_output_file = MIDIFile(1)
 tempo = 120
-midi_file.addTempo(track, midi_time, tempo)
+midi_output_file.addTempo(track, midi_time, tempo)
 
+# MIDI Input file
+input_file_path = 'output.mid'
+midi_file = mido.MidiFile(input_file_path)
+start_time = time.time()
 
 font_whites = pygame.font.SysFont(None, 24)
 font_blacks = pygame.font.SysFont(None, 15)
@@ -103,6 +115,28 @@ def draw_piano(whites, blacks):
 
     return white_rects, black_rects, whites, blacks
 
+def play_file():
+    for input_track in midi_file.tracks:
+        delta_time = 0
+        for message in input_track:
+            if message.type == 'note_on':
+                if message.note in notes.midi_notes:  # ensuring the presence of input
+                    if notes.midi_notes[message.note][1] == '#':  # black key detection
+                        index = notes.black_labels.index(notes.midi_notes[message.note])  # index
+                        black_sounds[index].play(0, 1000)  # playing sound
+                    else:  # white key detection
+                        index = notes.white_notes.index(notes.midi_notes[message.note])  # index
+                        white_sounds[index].play(0, 1000)  # playing sound
+                delta_time += message.time
+                current_input_time = time.time() - start_time
+                sleep_time = (delta_time - current_input_time) / 6000
+                if sleep_time > 0:  # Only sleep if the time difference is positive
+                    time.sleep(sleep_time)
+                    print("current:", current_input_time)
+                    print("delta:", delta_time)
+                    print("sleep time:", delta_time - current_input_time)
+                print("Message:", message)
+                print()
 
 class Button:
     def __init__(self, x, y, width, height, text, action=None):
@@ -203,7 +237,7 @@ while True:
                                             print("total", key_total_time)
                                             print("midi_time", midi_time)
                                             if isRecording:
-                                                midi_file.addNote(track, channel, midi_event[0][1], active_blacks[i][2], key_total_time, 100)
+                                                midi_output_file.addNote(track, channel, midi_event[0][1], active_blacks[i][2], key_total_time, 100)
                                             active_blacks[i][1] = 0
                                             if active_blacks[i][1] == 0:
                                                 active_blacks.pop(i)
@@ -215,7 +249,7 @@ while True:
                                             print("total", key_total_time)
                                             print("midi_time", midi_time)
                                             if isRecording:
-                                                midi_file.addNote(track, channel, midi_event[0][1], active_whites[i][2], key_total_time, 100)
+                                                midi_output_file.addNote(track, channel, midi_event[0][1], active_whites[i][2], key_total_time, 100)
                                             active_whites[i][1] = 0
                                             if active_whites[i][1] == 0:
                                                 active_whites.pop(i)
@@ -263,6 +297,13 @@ while True:
                     pygame.quit()
 
                 key_char = pygame.key.name(event.key).upper()
+
+                if key_char == '1':
+                    input_file_path = filedialog.askopenfilename()
+                    midi_file = mido.MidiFile(input_file_path)
+
+                if key_char == '2':
+                    play_file()
 
                 if key_char == 'W':
                     run = False
@@ -329,9 +370,8 @@ while True:
                                 if active_whites[i][1] == 0:
                                     active_whites.pop(i)
                                     break
-
         pygame.display.flip()
     with open("output.mid", "wb") as output_file:
-        midi_file.writeFile(output_file)
+        midi_output_file.writeFile(output_file)
     print("File was saved!")
     run = True
