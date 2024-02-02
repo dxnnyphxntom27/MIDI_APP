@@ -138,6 +138,17 @@ def play_file():
                 print("Message:", message)
                 print()
 
+def instrument_load(name):
+    white_sounds.clear()
+    black_sounds.clear()
+    for i in range(len(notes.white_notes)):
+        white_sounds.append(mixer.Sound(
+            f'C:\\Users\\yakac\\PycharmProjects\\APP_MIDI\\assets\\notes\\{name}\\{notes.white_notes[i]}.wav'))
+
+    for i in range(len(notes.black_notes)):
+        black_sounds.append(mixer.Sound(
+            f'C:\\Users\\yakac\\PycharmProjects\\APP_MIDI\\assets\\notes\\{name}\\{notes.black_notes[i]}.wav'))
+
 class Button:
     def __init__(self, x, y, width, height, text, action=None):
         self.rect = pygame.Rect(x, y, width, height)
@@ -148,7 +159,7 @@ class Button:
     def draw(self):
         pygame.draw.rect(screen, black_keys_color, self.rect)
         pygame.draw.rect(screen, (15, 15, 15), self.rect, 1)
-        text_surface = self.font.render(self.text, True, white_keys_color)
+        text_surface = self.font.render(self.text, True, black_keys_text)
         text_rect = text_surface.get_rect(center=self.rect.center)
         screen.blit(text_surface, text_rect)
 
@@ -172,14 +183,21 @@ text = ""
 
 run = True
 isRecording = False
+instrument = "Classic Piano"
 
-button_start_rec = Button(20, 75, 110, 40, "Record (Q)", button_click_action)
-button_stop_rec = Button(145, 75, 195, 40, "Stop Recording (W)", button_click_action)
+button_start_rec = Button(20, 75, 120, 40, "Record (Q)", button_click_action)
+button_stop_rec = Button(160, 75, 195, 40, "Stop Recording (W)", button_click_action)
 button_import = Button(20, 20, 140, 40, "Import MIDI (1)", button_click_action)
 button_start_play = Button(175, 20, 75, 40, "Play (2)", button_click_action)
-button_stop_play = Button(265, 20, 75, 40, "Stop (3)", button_click_action)
-button_recording = Button(20, 130, 320, 40, "", button_click_action)
-button_instrument = Button((WIDTH/2)-260, 20, 450, 40, "Instrument:   CLASSICAL PIANO", button_click_action)
+button_stop_play = Button(265, 20, 90, 40, "Theme (3)", button_click_action)
+button_recording = Button(20, 130, 335, 40, "", button_click_action)
+
+button_tempo = Button(760, 75, 120, 40, "", button_click_action)
+button_minus = Button(710, 80, 30, 30, "-", button_click_action)
+button_plus = Button(900, 80, 30, 30, "+", button_click_action)
+button_instrument = Button((WIDTH/2)-260, 20, 450, 40, "Instrument  (4):                                 ", button_click_action)
+
+theme = 1
 
 while True:
     while run:
@@ -197,14 +215,21 @@ while True:
         button_stop_play.draw()
         button_instrument.draw()
         button_recording.draw()
+        button_tempo.draw()
+        button_minus.draw()
+        button_plus.draw()
         img = pygame.image.load('C:\\Users\\yakac\\PycharmProjects\\APP_MIDI\\assets\\logo.png')
         screen.blit(img, (WIDTH-375, 10))
         if isRecording:
             time_text = font_whites.render(f"Recording:   {elapsed_time:}", True, (255, 100, 100))
             screen.blit(time_text, (112, 142))
         else:
-            time_text = font_whites.render('Recording:   00:00', True, (255, 255, 255))
+            time_text = font_whites.render('Recording:   00:00', True, black_keys_text)
             screen.blit(time_text, (112, 142))
+        tempo_text = font_whites.render(f"BPM: {tempo}", True, black_keys_text)
+        screen.blit(tempo_text, (785, 87))
+        instrument_text = font_whites.render(f"{instrument}", True, black_keys_text)
+        screen.blit(instrument_text, (825, 33))
 
     # MIDI CONTROLS
         if isConnected:
@@ -305,6 +330,30 @@ while True:
                 if key_char == '2':
                     play_file()
 
+                if key_char == '3':
+                    if theme == 1:
+                        theme = 2
+                        white_keys_color = (245, 245, 200)
+                        white_keys_outline = (100, 100, 100)
+                        black_keys_color = (40, 20, 0)
+                        white_keys_text = (40, 40, 0)
+                        black_keys_text = (245, 245, 215)
+                        background_color = (25, 10, 0)
+                        active_black_color = (120, 80, 0)
+                        active_white_color = (255, 255, 235)
+                    elif theme == 2:
+                        theme = 1
+                        white_keys_color = (245, 245, 245)
+                        white_keys_outline = (100, 100, 100)
+                        black_keys_color = (35, 35, 35)
+                        white_keys_text = (40, 40, 40)
+                        black_keys_text = (245, 245, 245)
+                        background_color = (55, 55, 55)
+                        active_black_color = (166, 210, 8)
+                        active_white_color = (216, 250, 8)
+
+
+
                 if key_char == 'W':
                     run = False
                     isRecording = False
@@ -313,6 +362,29 @@ while True:
                     isRecording = True
                     midi_time = 0
                     start_rec_time = pygame.time.get_ticks()
+
+                if key_char == '4':
+                    if instrument == "Classic Piano":
+                        instrument = "Crystal Glockenspiel"
+                        instrument_load("crystal")
+
+                    elif instrument == "Crystal Glockenspiel":
+                        instrument = "Acoustic Guitar"
+                        instrument_load("guitar")
+
+                    elif instrument == "Acoustic Guitar":
+                        instrument = "Classic Piano"
+                        instrument_load("piano")
+
+                if key_char == '=':
+                    tempo += 1
+                    midi_output_file.addTempo(track, midi_time, tempo)
+                    print("plus")
+
+                if key_char == '-':
+                    tempo -= 1
+                    midi_output_file.addTempo(track, midi_time, tempo)
+                    print("minus")
 
                 if key_char in notes.left_octave:
                     if notes.left_octave[key_char][1] == '#':
