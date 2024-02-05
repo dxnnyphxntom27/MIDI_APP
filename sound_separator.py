@@ -1,6 +1,6 @@
 from pydub import AudioSegment
 
-full_audio = AudioSegment.from_wav("file.wav")
+full_audio = AudioSegment.from_wav("piano.wav")
 notes = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
 
 start_octave = 0

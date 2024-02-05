@@ -59,6 +59,7 @@ pygame.init()
 pygame.midi.init()
 input_device_id = pygame.midi.get_default_input_id()
 
+# connected/not connected handling
 isConnected = False
 if input_device_id != -1:
     isConnected = True
@@ -67,6 +68,7 @@ if input_device_id != -1:
 print("MIDI Input Device Name:", pygame.midi.get_device_info(input_device_id))
 
 
+# piano drawing function
 def draw_piano(whites, blacks):
     white_rects = []
     black_rects = []
@@ -112,6 +114,8 @@ def draw_piano(whites, blacks):
 
     return white_rects, black_rects, whites, blacks
 
+
+# midi playback function
 def play_file():
     for input_track in midi_file.tracks:
         delta_time = 0
@@ -135,6 +139,8 @@ def play_file():
                 print("Message:", message)
                 print()
 
+
+# loading instrument .wav files
 def instrument_load(name):
     white_sounds.clear()
     black_sounds.clear()
@@ -147,6 +153,7 @@ def instrument_load(name):
             f'assets\\notes\\{name}\\{notes.black_notes[i]}.wav'))
 
 
+# button class
 class Button:
     def __init__(self, x, y, width, height, text, action=None):
         self.rect = pygame.Rect(x, y, width, height)
@@ -167,22 +174,26 @@ class Button:
                 if self.rect.collidepoint(event.pos):
                     self.action()
 
-# Function to be called when the button is clicked
+
 def button_click_action():
     print("Button clicked!")
 
 
+# timer function
 def my_timer(elapsed_seconds):
     minutes = int(elapsed_seconds // 60)
     seconds = int(elapsed_seconds % 60)
     timer_text = f"{minutes:02d}:{seconds:02d}"
     return timer_text
-text = ""
 
+
+# initializing default values
+text = ""
 run = True
 isRecording = False
 instrument = "Classic Piano"
 instrument_load("piano")
+theme = 1
 
 button_start_rec = Button(20, 75, 120, 40, "Record (Q)", button_click_action)
 button_stop_rec = Button(160, 75, 195, 40, "Stop Recording (W)", button_click_action)
@@ -196,7 +207,6 @@ button_minus = Button(710, 80, 30, 30, "-", button_click_action)
 button_plus = Button(900, 80, 30, 30, "+", button_click_action)
 button_instrument = Button((WIDTH/2)-260, 20, 450, 40, "Instrument  (4):                                 ", button_click_action)
 
-theme = 1
 
 while True:
     while run:
@@ -206,7 +216,11 @@ while True:
         timer.tick(fps)
         midi_time += 0.01
         screen.fill(background_color)
+
+        # drawing piano
         white_keys, black_keys, active_whites, active_blacks = draw_piano(active_whites, active_blacks)
+
+        # drawing buttons
         button_start_rec.draw()
         button_stop_rec.draw()
         button_import.draw()
@@ -217,14 +231,20 @@ while True:
         button_tempo.draw()
         button_minus.draw()
         button_plus.draw()
+
+        # drawing logo
         img = pygame.image.load('assets\\logo.png')
         screen.blit(img, (WIDTH-375, 10))
+
+        # drawing recording panel
         if isRecording:
             time_text = font_whites.render(f"Recording:   {elapsed_time:}", True, (255, 100, 100))
             screen.blit(time_text, (112, 142))
         else:
             time_text = font_whites.render('Recording:   00:00', True, black_keys_text)
             screen.blit(time_text, (112, 142))
+
+        # drawing tempo panel
         tempo_text = font_whites.render(f"BPM: {tempo}", True, black_keys_text)
         screen.blit(tempo_text, (785, 87))
         instrument_text = font_whites.render(f"{instrument}", True, black_keys_text)
@@ -322,13 +342,16 @@ while True:
 
                 key_char = pygame.key.name(event.key).upper()
 
+                # importing MIDI file handle
                 if key_char == '1':
                     input_file_path = filedialog.askopenfilename()
                     midi_file = mido.MidiFile(input_file_path)
 
+                # playing MIDI file handle
                 if key_char == '2':
                     play_file()
 
+                # change theme handle
                 if key_char == '3':
                     if theme == 1:
                         theme = 2
@@ -351,17 +374,18 @@ while True:
                         active_black_color = (166, 210, 8)
                         active_white_color = (216, 250, 8)
 
-
-
+                # stop recording handle
                 if key_char == 'W':
                     run = False
                     isRecording = False
 
+                # start recording handle
                 if key_char == 'Q':
                     isRecording = True
                     midi_time = 0
                     start_rec_time = pygame.time.get_ticks()
 
+                # change instrument table
                 if key_char == '4':
                     if instrument == "Classic Piano":
                         instrument = "Crystal Glockenspiel"
@@ -375,16 +399,19 @@ while True:
                         instrument = "Classic Piano"
                         instrument_load("piano")
 
+                # BPM decrease handle
                 if key_char == '=':
                     tempo += 1
                     midi_output_file.addTempo(track, midi_time, tempo)
                     print("plus")
 
+                # BPM increase handle
                 if key_char == '-':
                     tempo -= 1
                     midi_output_file.addTempo(track, midi_time, tempo)
                     print("minus")
 
+                # handling left hand keys input
                 if key_char in notes.left_octave:
                     if notes.left_octave[key_char][1] == '#':
                         index = notes.black_labels.index(notes.left_octave[key_char])
@@ -395,6 +422,7 @@ while True:
                         white_sounds[index].play(0, 1000)
                         active_whites.append([index, 1])
 
+                # handling right hand keys input
                 if key_char in notes.right_octave:
                     if notes.right_octave[key_char][1] == '#':
                         index = notes.black_labels.index(notes.right_octave[key_char])
@@ -405,6 +433,7 @@ while True:
                         white_sounds[index].play(0, 1000)
                         active_whites.append([index, 1])
 
+            # keyboard key release handle
             elif event.type == pygame.KEYUP:
                 print("Keyboard Event:", event)
                 key_char = pygame.key.name(event.key).upper()
@@ -442,6 +471,7 @@ while True:
                                     active_whites.pop(i)
                                     break
         pygame.display.flip()
+    # saving MIDI file
     with open("output.mid", "wb") as output_file:
         midi_output_file.writeFile(output_file)
     print("File was saved!")
