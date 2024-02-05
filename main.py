@@ -28,6 +28,7 @@ input_file_path = 'output.mid'
 midi_file = mido.MidiFile(input_file_path)
 start_time = time.time()
 
+# pygame initialization
 font_whites = pygame.font.SysFont(None, 24)
 font_blacks = pygame.font.SysFont(None, 15)
 fps = 165
@@ -36,7 +37,6 @@ WHITE_BUTTON_WIDTH = 33
 BLACK_BUTTON_WIDTH = WHITE_BUTTON_WIDTH - 12
 WIDTH = 52 * WHITE_BUTTON_WIDTH
 HEIGHT = 600
-
 screen = pygame.display.set_mode([WIDTH, HEIGHT])
 pygame.display.set_caption('MIDI APP')
 white_keys_color = (245, 245, 245)
@@ -48,11 +48,13 @@ background_color = (55, 55, 55)
 active_black_color = (166, 210, 8)
 active_white_color = (216, 250, 8)
 
+# piano variables
 white_sounds = []
 black_sounds = []
 active_whites = []
 active_blacks = []
 
+# init functions
 pygame.init()
 pygame.midi.init()
 input_device_id = pygame.midi.get_default_input_id()
@@ -64,14 +66,10 @@ if input_device_id != -1:
 
 print("MIDI Input Device Name:", pygame.midi.get_device_info(input_device_id))
 
-for i in range(len(notes.white_notes)):
-    white_sounds.append(mixer.Sound(f'C:\\Users\\yakac\\PycharmProjects\\APP_MIDI\\assets\\notes\\piano\\{notes.white_notes[i]}.wav'))
-
-for i in range(len(notes.black_notes)):
-    black_sounds.append(mixer.Sound(f'C:\\Users\\yakac\\PycharmProjects\\APP_MIDI\\assets\\notes\\piano\\{notes.black_notes[i]}.wav'))
 
 def draw_piano(whites, blacks):
     white_rects = []
+    black_rects = []
     for i in range(52):
         rect = pygame.draw.rect(screen, white_keys_color, [i * WHITE_BUTTON_WIDTH, HEIGHT - 300, WHITE_BUTTON_WIDTH, 300], 0, 3)
         white_rects.append(rect)
@@ -90,7 +88,6 @@ def draw_piano(whites, blacks):
     skip_count = 0
     last_skip = 2
     skip_track = 2
-    black_rects = []
 
     for i in range(36):
         rect = pygame.draw.rect(screen, black_keys_color, [BLACK_BUTTON_WIDTH + (i * WHITE_BUTTON_WIDTH) + (skip_count * WHITE_BUTTON_WIDTH), HEIGHT - 300, BLACK_BUTTON_WIDTH + 2, 200], 0, 2)
@@ -143,11 +140,12 @@ def instrument_load(name):
     black_sounds.clear()
     for i in range(len(notes.white_notes)):
         white_sounds.append(mixer.Sound(
-            f'C:\\Users\\yakac\\PycharmProjects\\APP_MIDI\\assets\\notes\\{name}\\{notes.white_notes[i]}.wav'))
+            f'assets\\notes\\{name}\\{notes.white_notes[i]}.wav'))
 
     for i in range(len(notes.black_notes)):
         black_sounds.append(mixer.Sound(
-            f'C:\\Users\\yakac\\PycharmProjects\\APP_MIDI\\assets\\notes\\{name}\\{notes.black_notes[i]}.wav'))
+            f'assets\\notes\\{name}\\{notes.black_notes[i]}.wav'))
+
 
 class Button:
     def __init__(self, x, y, width, height, text, action=None):
@@ -184,6 +182,7 @@ text = ""
 run = True
 isRecording = False
 instrument = "Classic Piano"
+instrument_load("piano")
 
 button_start_rec = Button(20, 75, 120, 40, "Record (Q)", button_click_action)
 button_stop_rec = Button(160, 75, 195, 40, "Stop Recording (W)", button_click_action)
@@ -218,7 +217,7 @@ while True:
         button_tempo.draw()
         button_minus.draw()
         button_plus.draw()
-        img = pygame.image.load('C:\\Users\\yakac\\PycharmProjects\\APP_MIDI\\assets\\logo.png')
+        img = pygame.image.load('assets\\logo.png')
         screen.blit(img, (WIDTH-375, 10))
         if isRecording:
             time_text = font_whites.render(f"Recording:   {elapsed_time:}", True, (255, 100, 100))

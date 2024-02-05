@@ -9,7 +9,6 @@ end_octave = 7
 segment_duration = 2000
 
 current_time = 0
-
 note_index = 0
 
 for octave in range(start_octave, end_octave + 1):
