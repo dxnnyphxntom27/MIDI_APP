@@ -35,7 +35,7 @@ fps = 165
 timer = pygame.time.Clock()
 WHITE_BUTTON_WIDTH = 33
 BLACK_BUTTON_WIDTH = WHITE_BUTTON_WIDTH - 12
-WIDTH = 52 * WHITE_BUTTON_WIDTH
+WIDTH = 36 * WHITE_BUTTON_WIDTH
 HEIGHT = 600
 screen = pygame.display.set_mode([WIDTH, HEIGHT])
 pygame.display.set_caption('MIDI APP')
@@ -72,7 +72,7 @@ print("MIDI Input Device Name:", pygame.midi.get_device_info(input_device_id))
 def draw_piano(whites, blacks):
     white_rects = []
     black_rects = []
-    for i in range(52):
+    for i in range(36):
         rect = pygame.draw.rect(screen, white_keys_color, [i * WHITE_BUTTON_WIDTH, HEIGHT - 300, WHITE_BUTTON_WIDTH, 300], 0, 3)
         white_rects.append(rect)
         pygame.draw.rect(screen, white_keys_outline, [i * WHITE_BUTTON_WIDTH, HEIGHT - 300, WHITE_BUTTON_WIDTH, 300], 1, 3)
@@ -82,8 +82,8 @@ def draw_piano(whites, blacks):
                 pygame.draw.rect(screen, active_white_color, [i * WHITE_BUTTON_WIDTH, HEIGHT - 300, WHITE_BUTTON_WIDTH, 300], 0, 2)
                 pygame.draw.rect(screen, white_keys_outline, [i * WHITE_BUTTON_WIDTH, HEIGHT - 300, WHITE_BUTTON_WIDTH, 300], 1, 3)
 
-        # Draw white key labels
-    for i in range(52):
+    # Draw white key labels
+    for i in range(36):
         key_label = font_whites.render(notes.white_notes[i], True, white_keys_text)
         screen.blit(key_label, (i * WHITE_BUTTON_WIDTH + 3, HEIGHT - 20))
 
@@ -91,16 +91,17 @@ def draw_piano(whites, blacks):
     last_skip = 2
     skip_track = 2
 
-    for i in range(36):
-        rect = pygame.draw.rect(screen, black_keys_color, [BLACK_BUTTON_WIDTH + (i * WHITE_BUTTON_WIDTH) + (skip_count * WHITE_BUTTON_WIDTH), HEIGHT - 300, BLACK_BUTTON_WIDTH + 2, 200], 0, 2)
-        for q in range(len(blacks)):
-            if blacks[q][0] == i:
-                if blacks[q][1] > 0:
-                    pygame.draw.rect(screen, active_black_color, [BLACK_BUTTON_WIDTH + (i * WHITE_BUTTON_WIDTH) + (skip_count * WHITE_BUTTON_WIDTH), HEIGHT - 300, BLACK_BUTTON_WIDTH + 2, 200], 0, 2)
+    for i in range(26):
+        if i > 0:
+            rect = pygame.draw.rect(screen, black_keys_color, [BLACK_BUTTON_WIDTH + ((i-2) * WHITE_BUTTON_WIDTH) + (skip_count * WHITE_BUTTON_WIDTH), HEIGHT - 300, BLACK_BUTTON_WIDTH + 2, 200], 0, 2)
+            for q in range(len(blacks)):
+                if blacks[q][0] == (i-1):
+                    if blacks[q][1] > 0:
+                        pygame.draw.rect(screen, active_black_color, [BLACK_BUTTON_WIDTH + ((i-2) * WHITE_BUTTON_WIDTH) + (skip_count * WHITE_BUTTON_WIDTH), HEIGHT - 300, BLACK_BUTTON_WIDTH + 2, 200], 0, 2)
 
-        key_label = font_blacks.render(notes.black_labels[i], True, black_keys_text)
-        screen.blit(key_label, (BLACK_BUTTON_WIDTH + 2 + (i * WHITE_BUTTON_WIDTH) + (skip_count * WHITE_BUTTON_WIDTH), HEIGHT - 120))
-        black_rects.append(rect)
+            key_label = font_blacks.render(notes.black_labels[i], True, black_keys_text)
+            screen.blit(key_label, (BLACK_BUTTON_WIDTH + 2 + ((i-2) * WHITE_BUTTON_WIDTH) + (skip_count * WHITE_BUTTON_WIDTH), HEIGHT - 120))
+            black_rects.append(rect)
         skip_track += 1
 
         if last_skip == 2 and skip_track == 3:
@@ -124,10 +125,10 @@ def play_file():
                 if message.note in notes.midi_notes:  # ensuring the presence of input
                     if notes.midi_notes[message.note][1] == '#':  # black key detection
                         index = notes.black_labels.index(notes.midi_notes[message.note])  # index
-                        black_sounds[index].play(0, 1000)  # playing sound
+                        black_sounds[index].play(0, 2000)  # playing sound
                     else:  # white key detection
                         index = notes.white_notes.index(notes.midi_notes[message.note])  # index
-                        white_sounds[index].play(0, 1000)  # playing sound
+                        white_sounds[index].play(0, 2000)  # playing sound
                 delta_time += message.time
                 current_input_time = time.time() - start_time
                 sleep_time = (delta_time - current_input_time) / 6000
@@ -202,10 +203,10 @@ button_start_play = Button(175, 20, 75, 40, "Play (2)", button_click_action)
 button_stop_play = Button(265, 20, 90, 40, "Theme (3)", button_click_action)
 button_recording = Button(20, 130, 335, 40, "", button_click_action)
 
-button_tempo = Button(760, 75, 120, 40, "", button_click_action)
-button_minus = Button(710, 80, 30, 30, "-", button_click_action)
-button_plus = Button(900, 80, 30, 30, "+", button_click_action)
-button_instrument = Button((WIDTH/2)-260, 20, 450, 40, "Instrument  (4):                                 ", button_click_action)
+button_tempo = Button((WIDTH/2)-60, 75, 120, 40, "", button_click_action)
+button_minus = Button((WIDTH/2)-105, 80, 30, 30, "-", button_click_action)
+button_plus = Button((WIDTH/2)+75, 80, 30, 30, "+", button_click_action)
+button_instrument = Button((WIDTH/2)-215, 20, 430, 40, "Instrument  (4):                                       ", button_click_action)
 
 
 while True:
@@ -246,9 +247,9 @@ while True:
 
         # drawing tempo panel
         tempo_text = font_whites.render(f"BPM: {tempo}", True, black_keys_text)
-        screen.blit(tempo_text, (785, 87))
+        screen.blit(tempo_text, (560, 87))
         instrument_text = font_whites.render(f"{instrument}", True, black_keys_text)
-        screen.blit(instrument_text, (825, 33))
+        screen.blit(instrument_text, (590, 33))
 
     # MIDI CONTROLS
         if isConnected:
@@ -263,11 +264,11 @@ while True:
                             if midi_event[0][1] in notes.midi_notes:  # ensuring the presence of input
                                 if notes.midi_notes[midi_event[0][1]][1] == '#':  # black key detection
                                     index = notes.black_labels.index(notes.midi_notes[midi_event[0][1]])  # index
-                                    black_sounds[index].play(0, 1000)  # playing sound
+                                    black_sounds[index].play(0, 2000)  # playing sound
                                     active_blacks.append([index, 1, key_start_time])  # storing active button (UI, rec)
                                 else:  # white key detection
                                     index = notes.white_notes.index(notes.midi_notes[midi_event[0][1]])  # index
-                                    white_sounds[index].play(0, 1000)  # playing sound
+                                    white_sounds[index].play(0, 2000)  # playing sound
                                     active_whites.append([index, 1, key_start_time])  # storing active button (UI, rec)
 
                         elif midi_event[0][2] == 0:  # if velocity of note = 0 or note off(released)
@@ -309,12 +310,12 @@ while True:
                 black_key = False
                 for i in range(len(black_keys)):
                     if black_keys[i].collidepoint(event.pos):
-                        black_sounds[i].play(0, 1000)
+                        black_sounds[i].play(0, 2000)
                         black_key = True
                         active_blacks.append([i, 1])
                 for i in range(len(white_keys)):
                     if white_keys[i].collidepoint(event.pos) and not black_key:
-                        white_sounds[i].play(0, 1000)
+                        white_sounds[i].play(0, 2000)
                         active_whites.append([i, 1])
 
             if event.type == pygame.MOUSEBUTTONUP:
@@ -415,22 +416,22 @@ while True:
                 if key_char in notes.left_octave:
                     if notes.left_octave[key_char][1] == '#':
                         index = notes.black_labels.index(notes.left_octave[key_char])
-                        black_sounds[index].play(0, 1000)
+                        black_sounds[index].play(0, 2000)
                         active_blacks.append([index, 1])
                     else:
                         index = notes.white_notes.index(notes.left_octave[key_char])
-                        white_sounds[index].play(0, 1000)
+                        white_sounds[index].play(0, 2000)
                         active_whites.append([index, 1])
 
                 # handling right hand keys input
                 if key_char in notes.right_octave:
                     if notes.right_octave[key_char][1] == '#':
                         index = notes.black_labels.index(notes.right_octave[key_char])
-                        black_sounds[index].play(0, 1000)
+                        black_sounds[index].play(0, 2000)
                         active_blacks.append([index, 1])
                     else:
                         index = notes.white_notes.index(notes.right_octave[key_char])
-                        white_sounds[index].play(0, 1000)
+                        white_sounds[index].play(0, 2000)
                         active_whites.append([index, 1])
 
             # keyboard key release handle
